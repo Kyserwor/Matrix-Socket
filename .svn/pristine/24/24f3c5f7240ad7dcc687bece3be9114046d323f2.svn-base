@@ -1,0 +1,78 @@
+import java.io.BufferedReader;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.Socket;
+
+/**
+ * Created by rlukas on 27.08.2015.
+ */
+public class ClientConnect {
+    public final  int portNumber = 8090;
+    public String ipAddress = "";
+    public  String userMatrixRequest = "";
+    public  String[] matrixDataFromServer = new String[6];
+    public boolean testIpAddress = false;
+
+    public String[] factory() throws IOException {
+        Socket clientSocket = setClientSocket();
+        DataOutputStream outToServer = outputStreamToServer(clientSocket);
+        BufferedReader inFormServer = inputStreamFromServer(clientSocket);
+        giveStringServer(outToServer, userMatrixRequest);
+        readInMatrix(inFormServer);
+        clientSocket.close();
+        return giveMatrixFromServer();
+    }
+
+    public  void setUserMatrixRequest(String matrixChoice){
+        userMatrixRequest = matrixChoice;
+    }
+
+    public  Socket setClientSocket() {
+        Socket socket;
+        try {
+            socket = new Socket(ipAddress, portNumber);
+            testIpAddress = true;
+            return socket;
+        } catch (IOException connectError){
+            testIpAddress = false;
+        }
+        return null;
+    }
+
+    public boolean testClientSocketConnect(){
+        Socket socket = setClientSocket();
+        return testIpAddress;
+    }
+
+    public  DataOutputStream outputStreamToServer(Socket clientSocket) throws IOException {
+        return new DataOutputStream(clientSocket.getOutputStream());
+    }
+
+    public  BufferedReader inputStreamFromServer(Socket clientSocket) throws IOException {
+        BufferedReader inFormServer = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+        return inFormServer;
+    }
+
+    public  void giveStringServer(DataOutputStream outputStream, String outputString) throws IOException {
+        outputStream.writeBytes(outputString + '\n');
+    }
+
+    public String[] readInMatrix(BufferedReader inFormServer) throws IOException {
+        int end = 6;
+        for (int index = 0; index < end; ++index) {
+            String inputStringFromServer = inFormServer.readLine();
+            if (inputStringFromServer != null && inputStringFromServer.equals("used")){
+                matrixDataFromServer[index] = inFormServer.readLine().toString();
+            } else if (inputStringFromServer.equals("end")){
+                index = end;
+            }
+        }
+        return matrixDataFromServer;
+    }
+
+    public  String[] giveMatrixFromServer(){
+        return matrixDataFromServer;
+    }
+
+}
